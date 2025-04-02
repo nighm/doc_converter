@@ -1,0 +1,24 @@
+# 构建目录
+build/
+build-*/
+
+# IDE相关
+.vscode/
+.idea/
+*.user
+*.user.*
+
+# 编译输出
+*.o
+*.so
+*.a
+*.exe
+*.dll
+*.lib
+
+# 日志文件
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db 

@@ -1,0 +1,14 @@
+# FindDocXML.cmake
+# 查找libxml2库
+#
+# 定义以下变量：
+# DOCXML_FOUND - 是否找到libxml2
+# DOCXML_INCLUDE_DIRS - libxml2头文件目录
+# DOCXML_LIBRARIES - libxml2库文件
+
+find_package(LibXml2 REQUIRED)
+find_package(ZLIB REQUIRED)
+
+set(DOCXML_FOUND TRUE)
+set(DOCXML_INCLUDE_DIRS ${LIBXML2_INCLUDE_DIRS})
+set(DOCXML_LIBRARIES ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES}) 
