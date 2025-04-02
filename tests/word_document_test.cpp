@@ -9,6 +9,8 @@
 #include "doc_converter/word_document.hpp"
 #include "doc_converter/document_elements.hpp"
 #include "doc_converter/logger.hpp"
+#include <filesystem>
+#include <fstream>
 
 using namespace doc_converter;
 
@@ -78,6 +80,58 @@ protected:
     }
 
     std::unique_ptr<TestWordDocument> doc;
+
+    void createTestDocxWithTable(const std::string& filePath) {
+        // 创建一个简单的Word文档，包含一个2x2的表格
+        std::ofstream file(filePath, std::ios::binary);
+        ASSERT_TRUE(file.is_open());
+
+        // 写入基本的Word文档结构
+        std::string docxContent = R"(
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+                <w:body>
+                    <w:tbl>
+                        <w:tr>
+                            <w:tc>
+                                <w:p>
+                                    <w:r>
+                                        <w:t>Header 1</w:t>
+                                    </w:r>
+                                </w:p>
+                            </w:tc>
+                            <w:tc>
+                                <w:p>
+                                    <w:r>
+                                        <w:t>Header 2</w:t>
+                                    </w:r>
+                                </w:p>
+                            </w:tc>
+                        </w:tr>
+                        <w:tr>
+                            <w:tc>
+                                <w:p>
+                                    <w:r>
+                                        <w:t>Data 1</w:t>
+                                    </w:r>
+                                </w:p>
+                            </w:tc>
+                            <w:tc>
+                                <w:p>
+                                    <w:r>
+                                        <w:t>Data 2</w:t>
+                                    </w:r>
+                                </w:p>
+                            </w:tc>
+                        </w:tr>
+                    </w:tbl>
+                </w:body>
+            </w:document>
+        )";
+
+        file << docxContent;
+        file.close();
+    }
 };
 
 // 测试构造函数
@@ -300,4 +354,43 @@ TEST_F(WordDocumentTest, ImageParsing) {
     // 验证图片数据不为空
     const auto& data = image->getImageData();
     EXPECT_FALSE(data.empty());
+}
+
+TEST_F(WordDocumentTest, ParseTable) {
+    // 创建一个包含表格的简单Word文档
+    std::string docxPath = "test_table.docx";
+    createTestDocxWithTable(docxPath);
+
+    // 加载文档
+    WordDocument doc;
+    ASSERT_TRUE(doc.loadFromFile(docxPath));
+
+    // 获取文档元素
+    const auto& elements = doc.getElements();
+    ASSERT_FALSE(elements.empty());
+
+    // 查找表格元素
+    auto tableElement = std::dynamic_pointer_cast<TableElement>(elements[0]);
+    ASSERT_NE(tableElement, nullptr);
+
+    // 验证表格内容
+    const auto& rows = tableElement->getRows();
+    ASSERT_EQ(rows.size(), 2);  // 2行
+
+    // 验证第一行
+    const auto& row1 = rows[0];
+    const auto& cells1 = row1.getCells();
+    ASSERT_EQ(cells1.size(), 2);  // 2列
+    EXPECT_EQ(cells1[0].getText(), "Header 1");
+    EXPECT_EQ(cells1[1].getText(), "Header 2");
+
+    // 验证第二行
+    const auto& row2 = rows[1];
+    const auto& cells2 = row2.getCells();
+    ASSERT_EQ(cells2.size(), 2);  // 2列
+    EXPECT_EQ(cells2[0].getText(), "Data 1");
+    EXPECT_EQ(cells2[1].getText(), "Data 2");
+
+    // 清理测试文件
+    std::filesystem::remove(docxPath);
 }

@@ -249,7 +249,8 @@ void WordDocument::parseTable(xmlNodePtr node) {
 
 TableRow WordDocument::parseTableRow(xmlNodePtr node) {
     TableRow row;
-    
+    Logger::getInstance().debug("开始解析表格行");
+
     // 遍历单元格
     for (xmlNodePtr cellNode = node->children; cellNode; cellNode = cellNode->next) {
         if (cellNode->type == XML_ELEMENT_NODE && 
@@ -259,25 +260,28 @@ TableRow WordDocument::parseTableRow(xmlNodePtr node) {
         }
     }
 
+    Logger::getInstance().debug("表格行解析完成，包含 " + std::to_string(row.getCells().size()) + " 个单元格");
     return row;
 }
 
 TableCell WordDocument::parseTableCell(xmlNodePtr node) {
+    Logger::getInstance().debug("开始解析表格单元格");
     std::string cellText;
-    
-    // 遍历单元格中的段落
-    for (xmlNodePtr pNode = node->children; pNode; pNode = pNode->next) {
-        if (pNode->type == XML_ELEMENT_NODE && 
-            xmlStrcmp(pNode->name, (const xmlChar*)"p") == 0) {
-            cellText += getNodeText(pNode) + "\n";
+
+    // 遍历单元格内容
+    for (xmlNodePtr contentNode = node->children; contentNode; contentNode = contentNode->next) {
+        if (contentNode->type == XML_ELEMENT_NODE && 
+            xmlStrcmp(contentNode->name, (const xmlChar*)"p") == 0) {
+            // 获取段落文本
+            std::string paragraphText = getNodeText(contentNode);
+            if (!cellText.empty()) {
+                cellText += "\n";
+            }
+            cellText += paragraphText;
         }
     }
 
-    // 移除最后一个换行符
-    if (!cellText.empty()) {
-        cellText.pop_back();
-    }
-
+    Logger::getInstance().debug("表格单元格解析完成: " + cellText);
     return TableCell(cellText);
 }
 
